@@ -1,0 +1,26 @@
+# One file for the whole repo — `backend/` and `frontend/` have none of their own.
+# Patterns without a slash match at any depth, so `node_modules/` and `dist/` cover
+# both subprojects; anything naming a path has to spell out which one.
+
+# Editors
+.idea/
+.vscode/
+.DS_Store
+
+# Claude Code local overrides (`.claude/settings.json` is shared, this is not)
+.claude/settings.local.json
+
+# Node
+node_modules/
+
+# Build output: `backend/dist` from tsc, `frontend/dist` from vite build
+dist/
+
+# Output of `npm run gen:openapi` (openapicmd typegen). Regenerated from
+# `common/openapi.yaml`, which is the source of truth — never edit it by hand, and
+# never commit it, or it will drift from the spec.
+frontend/src/openapi.d.ts
+
+# Local environment overrides (ports). `.env.example` is committed and documents
+# them; the code defaults match it, so a clone needs no `.env` to run.
+.env
