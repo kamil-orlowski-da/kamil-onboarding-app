@@ -10,17 +10,17 @@ parameters:
     default: false
 
 commands:
-  quickstart:
+  demo:
     parameters:
       command:
         type: string
-        description: command to run in quickstart directory
+        description: command to run in demo directory
         default: ''
     steps:
       - run:
-          name: quickstart/<< parameters.command >>
+          name: demo/<< parameters.command >>
           command: |
-            cd quickstart \
+            cd demo \
             && << parameters.command >>
 
 jobs:
@@ -39,32 +39,32 @@ jobs:
     steps:
       - checkout
       - nix
-      - quickstart:
+      - demo:
           command: make help
-      - quickstart:
+      - demo:
           command: make ci-create-env-local
       - run:
           name: add /home/circleci/.daml/bin to $PATH
           command: echo 'export PATH=/home/circleci/.daml/bin:${PATH}' >> $BASH_ENV
-      - quickstart:
+      - demo:
           command: make ci-install-playwright
-      - quickstart:
+      - demo:
           command: make build
-      - quickstart:
+      - demo:
           command: make test-daml
-      - quickstart:
+      - demo:
           command: make start
-      - quickstart:
+      - demo:
           command: make integration-test
       - store_test_results:
-          path: quickstart/integration-test/results.xml
+          path: demo/integration-test/results.xml
       - store_artifacts:
           when: always
-          path: quickstart/integration-test/playwright-report/
+          path: demo/integration-test/playwright-report/
           destination: playwright-report
       - store_artifacts:
           when: always
-          path: quickstart/integration-test/test-results/
+          path: demo/integration-test/test-results/
           destination: test-results
 
 workflows:

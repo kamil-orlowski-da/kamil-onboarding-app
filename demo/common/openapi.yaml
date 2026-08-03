@@ -1,0 +1,588 @@
+openapi: 3.0.0
+info:
+  title: Backend API
+  description: API to manage vehicle leasing parties and Tenant Registrations
+  version: 1.0.0
+
+tags:
+  - name: Feature Flags
+  - name: Auth
+  - name: Parties
+  - name: Admin
+
+paths:
+  /feature-flags:
+    get:
+      tags: [Feature Flags]
+      summary: Get feature flags
+      operationId: getFeatureFlags
+      responses:
+        '200':
+          description: A list of feature flags
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlags'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /login-links:
+    get:
+      tags: [Auth]
+      summary: Get list of links that initiate login
+      operationId: listLinks
+      responses:
+        '200':
+          description: Links that initiate login flows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginLink'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /user:
+    get:
+      tags: [Auth]
+      summary: Get Authenticated User
+      operationId: getAuthenticatedUser
+      responses:
+        '200':
+          description: Current authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticatedUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # --- Parties ----------------------------------------------------------------
+  #
+  # The registry of who plays which part in the vehicle leasing workflow: a car dealer
+  # supplies the vehicle, a leasing company finances it, a customer leases it. Held in
+  # memory by the backend and lost on restart — identity is not domain state, and on a
+  # real deployment these entries come from an identity provider instead.
+  #
+  # Two departures from the rest of this API, both forced by the fact that nobody can
+  # be authenticated before anybody exists:
+  #
+  #   * Unauthenticated. Registering a party is really an administrative act, so
+  #     "anyone may register one" is a property of the demo, not a pattern to carry
+  #     forward. Enforced outside this document, in the security filter chains
+  #     (`OAuth2Config` and `SharedSecretConfig`) — this API states authentication
+  #     nowhere, so the spec alone will not tell you.
+  #   * Reads are not scoped to the acting party. Every role in one list, because a
+  #     screen has to show who exists before you have picked anyone.
+
+  /actors:
+    get:
+      tags: [Parties]
+      summary: Every party in the registry, whatever its role
+      description: >
+        The only registry read — the role types carry no field this one omits, so a
+        per-role list would add nothing.
+      operationId: listActors
+      responses:
+        '200':
+          description: All known parties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Actor'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /car-dealers:
+    post:
+      tags: [Parties]
+      summary: Register a car dealer
+      operationId: createCarDealer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCarDealerRequest'
+      responses:
+        '201':
+          description: The dealer is registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarDealer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /leasing-companies:
+    post:
+      tags: [Parties]
+      summary: Register a leasing company
+      operationId: createLeasingCompany
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeasingCompanyRequest'
+      responses:
+        '201':
+          description: The leasing company is registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeasingCompany'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /customers:
+    post:
+      tags: [Parties]
+      summary: Register a customer
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '201':
+          description: The customer is registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/tenant-registrations:
+    get:
+      tags: [Admin]
+      summary: List all Tenant Registrations
+      operationId: listTenantRegistrations
+      responses:
+        '200':
+          description: A list of Tenant Registrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TenantRegistration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Admin]
+      summary: Create Tenant Registration
+      operationId: createTenantRegistration
+      requestBody:
+        description: Tenant Registration object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRegistrationRequest'
+            examples:
+              oauth2:
+                value:
+                  tenantId: "tenant-123"
+                  partyId: "party-abc"
+                  walletUrl: "http://wallet.localhost:2000/"
+                  clientId: "client-xyz"
+                  issuerUrl: "http://keycloak.localhost:8082/realms/AppProvider"
+                  internal: false
+              sharedSecret:
+                value:
+                  tenantId: "tenant-ss"
+                  partyId: "party-ss"
+                  walletUrl: "http://wallet.localhost:2000/"
+                  users: [ "alice","bob" ]
+                  internal: true
+      responses:
+        '201':
+          description: Registration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantRegistration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/tenant-registrations/{tenantId}:
+    delete:
+      tags: [Admin]
+      summary: Delete Tenant Registration
+      operationId: deleteTenantRegistration
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '204':
+          description: Tenant registration deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  parameters:
+    ContractId:
+      name: contractId
+      in: path
+      required: true
+      description: Ledger contract ID
+      schema:
+        type: string
+    CommandId:
+      name: commandId
+      in: query
+      required: true
+      description: The command ID for the ledger transaction
+      schema:
+        type: string
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      description: Tenant identifier
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflict with current state of the resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: An internal server error occurred
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    TenantRegistrationRequest:
+      type: object
+      required:
+        - tenantId
+        - partyId
+        - walletUrl
+      properties:
+        tenantId:
+          type: string
+        partyId:
+          type: string
+        walletUrl:
+          type: string
+        clientId:
+          type: string
+          description: Required when authMode is oauth2
+        issuerUrl:
+          type: string
+          description: Required when authMode is oauth2
+        users:
+          type: array
+          description: Required (non-empty) when authMode is shared-secret
+          items:
+            type: string
+
+    TenantRegistration:
+      type: object
+      required:
+        - tenantId
+        - partyId
+        - walletUrl
+        - internal
+      properties:
+        tenantId:
+          type: string
+          description: Tenant identifier
+        partyId:
+          type: string
+          description: Party identifier
+        walletUrl:
+          type: string
+          description: Wallet URL for payment redirects
+          format: uri
+        clientId:
+          type: string
+          description: OAuth2 client identifier
+        issuerUrl:
+          type: string
+          description: Issuer URL
+          format: uri
+        internal:
+          type: boolean
+          description: Internal registration
+        users:
+          type: array
+          items:
+            type: string
+    AuthenticatedUser:
+      type: object
+      required:
+        - name
+        - party
+        - roles
+        - isAdmin
+        - walletUrl
+      properties:
+        name:
+          type: string
+        party:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        isAdmin:
+          type: boolean
+        walletUrl:
+          type: string
+        # Which part this party plays in the leasing workflow, if it has been
+        # registered in the party registry. Optional because authentication and
+        # registration are separate: you can log in as a party nobody has given a
+        # leasing role to. A display hint only — the backend re-checks on every request
+        # regardless of what the frontend chose to render. Distinct from `roles` above,
+        # which are authentication roles.
+        #
+        # A bare `$ref`, with the prose in a comment rather than a sibling
+        # `description`: OpenAPI 3.0 ignores anything alongside a `$ref`, so a
+        # description here would read as documentation and generate as nothing.
+        leasingRole:
+          $ref: '#/components/schemas/Role'
+
+    LoginLink:
+      type: object
+      required:
+        - name
+        - url
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+
+    # --- Parties --------------------------------------------------------------
+
+    Role:
+      type: string
+      description: >
+        Which of the three parties in the leasing workflow this is; exactly one per
+        party, fixed at registration. It says what a party is, not what it may do to
+        any particular record — that depends on the record's own state.
+      enum:
+        - CarDealer
+        - LeasingCompany
+        - Customer
+
+    Actor:
+      type: object
+      description: A party in the registry, reduced to what a party-picker needs.
+      required:
+        - party
+        - role
+        - name
+        - createdAt
+      properties:
+        party:
+          type: string
+          description: >
+            Identifies the party. Opaque — derived from the name at registration, and
+            never parsed or constructed by a client, which gets it from a read or a
+            write and hands it back.
+          example: CarDealer::acme-motors
+        role:
+          $ref: '#/components/schemas/Role'
+        name:
+          type: string
+          example: Acme Motors
+        createdAt:
+          type: string
+          format: date-time
+
+    # The three roles carry no fields of their own — a party is a name, a role and an
+    # id, with no contact or registration details. Each is `Actor` with `role` pinned
+    # to one value, kept separate because the endpoints are.
+
+    CarDealer:
+      type: object
+      description: Supplies the vehicle and holds it physically until delivery.
+      required:
+        - party
+        - role
+        - name
+        - createdAt
+      properties:
+        party:
+          type: string
+          example: CarDealer::acme-motors
+        role:
+          $ref: '#/components/schemas/Role'
+        name:
+          type: string
+          example: Acme Motors
+        createdAt:
+          type: string
+          format: date-time
+
+    LeasingCompany:
+      type: object
+      description: Finances the vehicle, owns it for the term, administers the lease.
+      required:
+        - party
+        - role
+        - name
+        - createdAt
+      properties:
+        party:
+          type: string
+          example: LeasingCompany::northern-leasing-ag
+        role:
+          $ref: '#/components/schemas/Role'
+        name:
+          type: string
+          example: Northern Leasing AG
+        createdAt:
+          type: string
+          format: date-time
+
+    Customer:
+      type: object
+      description: Leases the vehicle, drives it, may buy it out at the end.
+      required:
+        - party
+        - role
+        - name
+        - createdAt
+      properties:
+        party:
+          type: string
+          example: Customer::jamie-fletcher
+        role:
+          $ref: '#/components/schemas/Role'
+        name:
+          type: string
+          example: Jamie Fletcher
+        createdAt:
+          type: string
+          format: date-time
+
+    # `name` is not merely a label: with no `party` given, the registry slugs it into the
+    # party id, which is why the same name twice in one role is a 409 rather than a second
+    # entry.
+    #
+    # `party` is how a leasing role gets attached to a party that actually exists on the
+    # ledger. Omit it and you get a made-up id — enough to populate a screen, and it works
+    # from curl before anyone has logged in, but it belongs to nobody, so nothing can
+    # recognise you as that party later. Pass the party id you are logged in as and
+    # `/user` reports the `leasingRole` from then on.
+
+    CreateCarDealerRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Acme Motors
+        party:
+          type: string
+          description: >
+            An existing party id to attach this role to. Defaults to one derived from the
+            name, which no ledger party will match.
+          example: app_provider_demo-e-1::1220a1b2
+
+    CreateLeasingCompanyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Northern Leasing AG
+        party:
+          type: string
+          description: See CreateCarDealerRequest.party.
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Jamie Fletcher
+        party:
+          type: string
+          description: See CreateCarDealerRequest.party.
+
+    FeatureFlags:
+      type: object
+      properties:
+        authMode:
+          type: string
+          enum:
+            - oauth2
+            - shared-secret
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          nullable: true
+          example: "TenantId is required"

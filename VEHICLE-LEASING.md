@@ -8,7 +8,7 @@ against it.
 The story: a **car dealer** supplies a vehicle, a **leasing company** finances it and owns
 it for the term, a **customer** leases it and may buy it out at the end. So far only the
 parties exist. The leasing workflow between them does not — there is no Daml model for it
-yet, and `quickstart/daml/` is still upstream's licensing example.
+yet, and `demo/daml/` is still upstream's licensing example.
 
 A separate file rather than a section in upstream's `README.md`, so bumping the quickstart
 stays a merge instead of a reconciliation. What the quickstart gave us — login, tenant
@@ -21,13 +21,13 @@ sequence diagrams in [QUICKSTART-FLOWS.md](QUICKSTART-FLOWS.md).
 
 | Where | What |
 | --- | --- |
-| `quickstart/common/openapi.yaml` | `Parties` tag: `GET /actors`, `POST /car-dealers`, `POST /leasing-companies`, `POST /customers`; the `Role`/`Actor` schemas; `leasingRole` on `AuthenticatedUser` |
-| `quickstart/backend/.../registry/PartyRegistry.java` | Who exists and what part they play. In memory, lost on restart |
-| `quickstart/backend/.../service/*ApiImpl.java` | `ActorsApiImpl`, `CarDealersApiImpl`, `LeasingCompaniesApiImpl`, `CustomersApiImpl`, and `PartyRequests` for what counts as a valid name |
-| `quickstart/backend/.../service/UserApiImpl.java` | Reports the caller's `leasingRole`, if the registry knows one |
-| `quickstart/backend/.../security/` | Both filter chains permit the registry paths |
-| `quickstart/frontend/src/` | `views/PartiesView.tsx`, `stores/partyStore.tsx`, `roles.ts`, plus the route in `App.tsx` and the nav link in `Header.tsx` |
-| `quickstart/daml/leasing/`, `leasing-tests/` | The Daml package the leasing contracts go in, and its test package. Both empty so far |
+| `demo/common/openapi.yaml` | `Parties` tag: `GET /actors`, `POST /car-dealers`, `POST /leasing-companies`, `POST /customers`; the `Role`/`Actor` schemas; `leasingRole` on `AuthenticatedUser` |
+| `demo/backend/.../registry/PartyRegistry.java` | Who exists and what part they play. In memory, lost on restart |
+| `demo/backend/.../service/*ApiImpl.java` | `ActorsApiImpl`, `CarDealersApiImpl`, `LeasingCompaniesApiImpl`, `CustomersApiImpl`, and `PartyRequests` for what counts as a valid name |
+| `demo/backend/.../service/UserApiImpl.java` | Reports the caller's `leasingRole`, if the registry knows one |
+| `demo/backend/.../security/` | Both filter chains permit the registry paths |
+| `demo/frontend/src/` | `views/PartiesView.tsx`, `stores/partyStore.tsx`, `roles.ts`, plus the route in `App.tsx` and the nav link in `Header.tsx` |
+| `demo/daml/leasing/`, `leasing-tests/` | The Daml package the leasing contracts go in, and its test package. Both empty so far |
 
 ## What was removed
 
@@ -40,8 +40,8 @@ registry and the infrastructure around it — `/feature-flags`, `/login-links`, 
 `/admin/tenant-registrations`, which is how an App User's party and OAuth2 client get into
 the app in the first place.
 
-The Daml model went too. `quickstart/daml/licensing/` and its tests are replaced by
-`quickstart/daml/leasing/`, a package with no templates in it yet, and the
+The Daml model went too. Upstream's `daml/licensing/` and its tests are replaced by
+`demo/daml/leasing/`, a package with no templates in it yet, and the
 `make create-app-install-request` helper that seeded the demo is gone with them.
 
 **The plumbing stays**, and that is the whole point of the split: `LedgerApi` (submit and
@@ -71,7 +71,7 @@ error classes, Actuator for `/health`, Spring Security for `/logout`, and its ex
 
 ## Running it
 
-From `quickstart/`:
+From `demo/`:
 
 ```bash
 make setup     # writes .env.local: auth mode, party hint, observability
@@ -117,16 +117,16 @@ through the optional `party` field on a registration:
 The order that keeps everything type-checked, since the spec is the source of truth for
 both sides:
 
-1. Model the contracts in Daml, in `quickstart/daml/leasing/daml/Leasing/Lease.daml` —
+1. Model the contracts in Daml, in `demo/daml/leasing/daml/Leasing/Lease.daml` —
    empty, waiting for them. There is no worked example left in the tree, so the reference
    is upstream's licensing model at the commit before it was removed, or the quickstart
-   repo itself. Tests go in `quickstart/daml/leasing-tests/`, run by `make test-daml`.
-2. Add the paths and schemas to `quickstart/common/openapi.yaml` — a collection path per
+   repo itself. Tests go in `demo/daml/leasing-tests/`, run by `make test-daml`.
+2. Add the paths and schemas to `demo/common/openapi.yaml` — a collection path per
    aggregate plus `{id}:<verb>` for each state transition, which is the convention the
    licensing paths already follow.
-3. Implement the generated interface in `quickstart/backend/.../service/`. Interfaces are
+3. Implement the generated interface in `demo/backend/.../service/`. Interfaces are
    named from the first path segment, so `/leases` gives you `LeasesApi`.
-4. `npm run gen:openapi` in `quickstart/frontend`, then a store under `src/stores/` and a
+4. `npm run gen:openapi` in `demo/frontend`, then a store under `src/stores/` and a
    view under `src/views/`, wired into `App.tsx`.
 
 Two conventions worth keeping whatever the domain grows into: ids stay opaque strings the
