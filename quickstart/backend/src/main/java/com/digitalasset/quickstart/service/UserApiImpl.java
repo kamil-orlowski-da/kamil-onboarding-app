@@ -3,6 +3,7 @@
 package com.digitalasset.quickstart.service;
 
 import com.digitalasset.quickstart.api.UserApi;
+import com.digitalasset.quickstart.registry.PartyRegistry;
 import com.digitalasset.quickstart.security.AuthenticatedUserProvider;
 import com.digitalasset.quickstart.repository.TenantPropertiesRepository;
 import com.digitalasset.quickstart.repository.TenantPropertiesRepository.TenantProperties;
@@ -22,11 +23,13 @@ import java.util.concurrent.CompletableFuture;
 public class UserApiImpl implements UserApi {
     private final TenantPropertiesRepository tenantPropertiesRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final PartyRegistry partyRegistry;
 
     @Autowired
-    public UserApiImpl(TenantPropertiesRepository tenantPropertiesRepository, AuthenticatedUserProvider authenticatedUserProvider) {
+    public UserApiImpl(TenantPropertiesRepository tenantPropertiesRepository, AuthenticatedUserProvider authenticatedUserProvider, PartyRegistry partyRegistry) {
         this.tenantPropertiesRepository = tenantPropertiesRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.partyRegistry = partyRegistry;
     }
 
     @Override
@@ -46,6 +49,12 @@ public class UserApiImpl implements UserApi {
                                     user.isAdmin(),
                                     walletUrl
                             );
+                            // Which part this party plays in the leasing workflow, if anyone has
+                            // registered it. Left null when nobody has: authentication and
+                            // registration are separate, so being logged in says nothing about
+                            // having a leasing role. A display hint only — every endpoint
+                            // re-checks regardless of what the frontend rendered.
+                            partyRegistry.roleOf(user.partyId()).ifPresent(out::setLeasingRole);
                             // Return the AuthenticatedUser in the response
                             return ResponseEntity.ok(out);
                         })

@@ -9,6 +9,7 @@ import com.digitalasset.quickstart.security.Auth;
 import com.digitalasset.quickstart.security.AuthenticatedPartyProvider;
 import com.digitalasset.quickstart.security.AuthenticatedUserProvider;
 import com.digitalasset.quickstart.security.TokenProvider;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,8 +52,11 @@ public class SharedSecretConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/login", "/user", "/login-links", "/feature-flags", "/error", "/oauth2/authorization/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actors").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/car-dealers", "/leasing-companies", "/customers").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

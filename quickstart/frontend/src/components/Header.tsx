@@ -45,26 +45,38 @@ const AuthenticatedLinks: React.FC = () => {
         fetchUser();
     }, [fetchUser]);
 
-    if (loading || user === null) {
+    if (loading) {
         return null;
     }
 
     return (
         <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
-                <Link className="nav-link" to="/">Home</Link>
-            </li>
-            <li className="nav-item">
-                <Link className="nav-link" to="/app-installs">AppInstalls</Link>
-            </li>
-            <li className="nav-item">
-                <Link className="nav-link" to="/licenses">Licenses</Link>
-            </li>
-            {user.isAdmin && (
-                <li className="nav-item">
-                    <Link className="nav-link" to="/tenants">Tenants</Link>
-                </li>
+            {user !== null && (
+                <>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/">Home</Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/app-installs">AppInstalls</Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/licenses">Licenses</Link>
+                    </li>
+                    {user.isAdmin && (
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/tenants">Tenants</Link>
+                        </li>
+                    )}
+                </>
             )}
+            {/*
+                Outside the session check, unlike everything above: the leasing party registry
+                starts empty and its endpoints are open, so this has to be reachable before
+                there is anyone to log in as.
+            */}
+            <li className="nav-item">
+                <Link className="nav-link" to="/parties">Parties</Link>
+            </li>
         </ul>
     );
 };

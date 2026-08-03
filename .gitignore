@@ -42,3 +42,6 @@ gradle-app.setting
 .direnv/
 
 logs
+
+# Claude Code local overrides (`.claude/settings.json` is shared, this is not)
+.claude/settings.local.json

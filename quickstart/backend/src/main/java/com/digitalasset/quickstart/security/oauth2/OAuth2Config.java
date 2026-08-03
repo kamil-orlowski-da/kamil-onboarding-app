@@ -6,6 +6,7 @@ package com.digitalasset.quickstart.security.oauth2;
 import com.digitalasset.quickstart.security.Auth;
 import com.digitalasset.quickstart.security.PartyAuthority;
 import com.digitalasset.quickstart.security.TenantAuthority;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -66,10 +67,29 @@ public class OAuth2Config {
                 .csrf((csrf) -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                        // The party registrations, which are `permitAll` below. CSRF protection
+                        // stops a third-party page from spending a *logged-in* user's authority;
+                        // these endpoints borrow no authority, because anyone may call them
+                        // directly with curl. So there is nothing to protect here — and requiring
+                        // a token would break the case that has to work, a first registration from
+                        // a browser that has no session and so no XSRF-TOKEN cookie yet.
+                        .ignoringRequestMatchers("/car-dealers", "/leasing-companies", "/customers")
                 )
                 .authorizeHttpRequests(authorize -> authorize
+                        // Reporting a failure is not a second thing to authorize. Spring forwards
+                        // to /error to render one, which re-enters this chain keeping the original
+                        // method — so without this, a 400 or 409 from an unauthenticated POST
+                        // (a duplicate party name, say) comes back as a 401 instead.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/user", "/login-links", "/feature-flags", "/oauth2/authorization/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/logout").permitAll()
+                        // The vehicle leasing party registry, open on purpose: it starts empty, so
+                        // putting registration behind a login would deadlock, and a party-picker
+                        // has to list who exists before anyone has been picked. A demo affordance
+                        // — registering a party is really an administrative act — so do not read
+                        // these two lines as a pattern to follow for domain endpoints.
+                        .requestMatchers(HttpMethod.GET, "/actors").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/car-dealers", "/leasing-companies", "/customers").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
