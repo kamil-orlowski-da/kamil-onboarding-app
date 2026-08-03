@@ -1,0 +1,16 @@
+-- Copyright (c) 2026, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: 0BSD
+
+-- | The on-ledger model for vehicle leasing.
+--
+-- Empty on purpose. Upstream's licensing contracts were removed with the rest of
+-- its demo, and the leasing contracts have not been written yet — a car dealer
+-- supplies a vehicle, a leasing company finances it, a customer leases it, and
+-- none of that is modelled here so far. Who the parties are lives in the
+-- backend's in-memory @PartyRegistry@, not on the ledger.
+--
+-- The package still exists because the build generates the backend's Java
+-- bindings from this package's DAR: @LedgerApi@ and @Pqs@ need the @daml.Daml@
+-- dictionary, and the token-standard bindings come from the data-dependencies in
+-- @daml.yaml@. So this is the file to start adding templates to.
+module Leasing.Lease where

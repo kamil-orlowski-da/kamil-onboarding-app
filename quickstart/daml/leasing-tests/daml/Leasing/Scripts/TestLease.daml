@@ -1,0 +1,10 @@
+-- Copyright (c) 2026, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: 0BSD
+
+-- | Daml Script tests for the leasing model.
+--
+-- No tests yet, because there are no contracts yet — see @Leasing.Lease@. The
+-- package and the @make test-daml@ target are kept wired up so the first test
+-- has somewhere to go, and the token-standard test helpers it will probably want
+-- are already in @daml.yaml@.
+module Leasing.Scripts.TestLease where

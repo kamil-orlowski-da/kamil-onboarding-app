@@ -214,12 +214,6 @@ test-daml: build-daml
 build-docker-images: docker-available
 	$(call docker-compose, ${DOCKER_COMPOSE_OBSERVABILITY_FILES} $(RESOURCE_CONSTRAINT_CONFIG) build)
 
-.PHONY: create-app-install-request
-create-app-install-request: DOCKER_COMPOSE_FILES = -f docker/create-app-install-request/compose.yaml
-create-app-install-request: DOCKER_COMPOSE_PROFILES =
-create-app-install-request: docker-available ## Submit an App Install Request from the App User participant node
-	$(call docker-compose, run --rm container)
-
 .PHONY: restart-backend
 restart-backend: build-backend docker-available ## Build and start the application
 	$(call docker-compose, rm -s -f backend-service)

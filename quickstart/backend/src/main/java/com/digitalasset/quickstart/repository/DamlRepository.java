@@ -9,22 +9,26 @@ import com.digitalasset.transcode.java.ContractId;
 import com.digitalasset.transcode.java.Template;
 import com.digitalasset.transcode.java.Utils;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import quickstart_licensing.licensing.appinstall.AppInstall;
-import quickstart_licensing.licensing.appinstall.AppInstallRequest;
-import quickstart_licensing.licensing.license.License;
-import quickstart_licensing.licensing.license.LicenseRenewalRequest;
-import splice_api_token_allocation_request_v1.splice.api.token.allocationrequestv1.AllocationRequest;
-import splice_api_token_allocation_v1.splice.api.token.allocationv1.Allocation;
 
 /**
- * Repository for accessing active Daml contracts via PQS.
+ * Reads active Daml contracts out of PQS.
+ * <p>
+ * No queries yet: this held upstream's licensing queries, which went with the rest of
+ * that demo, and the leasing model has no contracts to query yet. What is left is the
+ * wiring and the extraction helpers, so the first leasing query has somewhere to go.
+ * <p>
+ * For the straightforward cases, prefer {@link Pqs} directly — {@code pqs.active(X.class)}
+ * for every active contract of a template, {@code pqs.contractByContractId(X.class, cid)}
+ * for one by id. This class earns its keep when a query needs SQL that PQS does not
+ * generate for you: a join across templates, a filter the database should do rather than
+ * the JVM, an aggregate. In that case run the SQL through {@code pqs}, then turn each row
+ * into a typed {@link Contract} with the helpers below. Upstream's version joined licenses
+ * to their renewal requests and allocations that way — worth reading out of git history if
+ * you want the pattern in full.
  */
 @Repository
 public class DamlRepository {
@@ -36,124 +40,32 @@ public class DamlRepository {
         this.pqs = pqs;
     }
 
-    public record LicenseRenewalRequestWithAllocationCid(
-            Contract<LicenseRenewalRequest> renewal,
-            Optional<ContractId<Allocation>> allocationCid) {
+    protected Pqs pqs() {
+        return pqs;
     }
 
-    public record LicenseWithRenewalRequests(
-            Contract<License> license,
-            List<LicenseRenewalRequestWithAllocationCid> renewals) {
-    }
-
-    private <T extends Template> T extractPayload(Class<T> clazz, String payload) {
+    /** Decodes a JSON payload column into a template's generated Java class. */
+    protected <T extends Template> T extractPayload(Class<T> clazz, String payload) {
         return clazz.cast(pqs.getJson2Dto().template(Utils.getTemplateIdByClass(clazz)).convert(payload));
     }
 
-    private <T extends Template> Contract<T> extract(Class<T> clazz, ContractId<T> cid, String payload) {
+    /** Pairs a contract id with its decoded payload, as PQS rows come back. */
+    protected <T extends Template> Contract<T> extract(Class<T> clazz, ContractId<T> cid, String payload) {
         return new Contract<>(cid, extractPayload(clazz, payload));
     }
 
-    private <T extends Template> Optional<ContractId<T>> optionalCid(Class<T> clazz, String cid) {
+    /** Types a contract id column, for a join where the row may not have one. */
+    protected <T extends Template> Optional<ContractId<T>> optionalCid(Class<T> clazz, String cid) {
         return Optional.ofNullable(cid).map(ContractId<T>::new);
     }
 
-    private <T extends Template> ContractId<T> cid(Class<T> clazz, String cid) {
+    /** Types a contract id column. */
+    protected <T extends Template> ContractId<T> cid(Class<T> clazz, String cid) {
         return new ContractId<T>(cid);
     }
 
-    private <T extends Template> String qualifiedName(Class<T> clazz) {
+    /** The template's fully qualified Daml name, which is how PQS names its views. */
+    protected <T extends Template> String qualifiedName(Class<T> clazz) {
         return Utils.getTemplateIdByClass(clazz).qualifiedName();
-    }
-
-    /**
-     * Finds active License contracts where the user or provider matches the given party.
-     */
-    public CompletableFuture<List<LicenseWithRenewalRequests>> findActiveLicenses(String party) {
-        var map = new HashMap<String, LicenseWithRenewalRequests>();
-        String sql = """
-                SELECT license.contract_id    AS license_contract_id,
-                       license.payload        AS license_payload,
-                       renewal.contract_id    AS renewal_contract_id,
-                       renewal.payload        AS renewal_payload,
-                       allocation.contract_id AS allocation_contract_id
-                FROM active(?) license
-                LEFT JOIN active(?) renewal ON
-                    license.payload->>'licenseNum' = renewal.payload->>'licenseNum'
-                    AND license.payload->>'user' = renewal.payload->>'user'
-                LEFT JOIN active(?) allocation ON
-                    renewal.payload->>'requestId' = allocation.payload->'allocation'->'settlement'->'settlementRef'->>'id'
-                    AND renewal.payload->>'user' = allocation.payload->'allocation'->'transferLeg'->>'sender'
-                WHERE license.payload->>'user' = ? OR license.payload->>'provider' = ?
-                ORDER BY license.contract_id
-                """;
-        return pqs.query(sql, rs -> {
-                    var licenseId = rs.getString("license_contract_id");
-                    if (!map.containsKey(licenseId)) {
-                        map.put(licenseId,
-                                new LicenseWithRenewalRequests(
-                                        extract(License.class, cid(License.class, licenseId), rs.getString("license_payload")),
-                                        new java.util.ArrayList<>()
-                                )
-                        );
-                    }
-                    var renewalCid = optionalCid(LicenseRenewalRequest.class, rs.getString("renewal_contract_id"));
-                    if (renewalCid.isPresent()) {
-                        map.get(licenseId).renewals.add(new LicenseRenewalRequestWithAllocationCid(
-                                        extract(LicenseRenewalRequest.class, renewalCid.get(), rs.getString("renewal_payload")),
-                                        optionalCid(Allocation.class, rs.getString("allocation_contract_id"))
-                                )
-                        );
-                    }
-                },
-                qualifiedName(License.class),
-                qualifiedName(LicenseRenewalRequest.class),
-                qualifiedName(Allocation.class),
-                party,
-                party
-        ).thenApply(v -> new java.util.ArrayList<>(map.values()));
-    }
-
-    /**
-     * Fetches a License contract by contract ID.
-     */
-    public CompletableFuture<Optional<Contract<License>>> findLicenseById(String contractId) {
-        return pqs.contractByContractId(License.class, contractId);
-    }
-
-    public CompletableFuture<Optional<Contract<LicenseRenewalRequest>>> findActiveLicenseRenewalRequestById(String contractId) {
-       return pqs.contractByContractId(LicenseRenewalRequest.class, contractId);
-    }
-
-    public CompletableFuture<Optional<Contract<AllocationRequest>>> findActiveAllocationRequestById(String contractId) {
-        return pqs.contractByContractId(AllocationRequest.class, contractId);
-    }
-
-    /**
-     * Fetches an AppInstall contract by contract ID.
-     */
-    public CompletableFuture<Optional<Contract<AppInstall>>> findAppInstallById(String contractId) {
-        return pqs.contractByContractId(AppInstall.class, contractId);
-    }
-
-    /**
-     * Fetches an AppInstallRequest contract by contract ID.
-     */
-    public CompletableFuture<Optional<Contract<AppInstallRequest>>> findAppInstallRequestById(String contractId) {
-        return pqs.contractByContractId(AppInstallRequest.class, contractId);
-    }
-
-    /**
-     * Finds all active AppInstall contracts.
-     */
-    public CompletableFuture<List<Contract<AppInstall>>> findActiveAppInstalls() {
-        return pqs.active(AppInstall.class);
-    }
-
-    /**
-     * Finds all active AppInstallRequest contracts.
-     */
-    public CompletableFuture<List<Contract<AppInstallRequest>>> findActiveAppInstallRequests() {
-        return pqs.active(AppInstallRequest.class);
     }
 }

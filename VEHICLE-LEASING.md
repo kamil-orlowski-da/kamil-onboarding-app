@@ -1,8 +1,9 @@
 # Vehicle Leasing
 
-What this repository adds on top of [cn-quickstart][], which is otherwise imported
-verbatim (see the commit that says so — `README.md` and everything else at this level is
-upstream's).
+What this repository adds on top of [cn-quickstart][], and what it takes away. The
+quickstart was imported verbatim first (see the commit that says so — `README.md` and
+everything else at this level is upstream's), so everything described here reads as a diff
+against it.
 
 The story: a **car dealer** supplies a vehicle, a **leasing company** finances it and owns
 it for the term, a **customer** leases it and may buy it out at the end. So far only the
@@ -10,7 +11,9 @@ parties exist. The leasing workflow between them does not — there is no Daml m
 yet, and `quickstart/daml/` is still upstream's licensing example.
 
 A separate file rather than a section in upstream's `README.md`, so bumping the quickstart
-stays a merge instead of a reconciliation.
+stays a merge instead of a reconciliation. What the quickstart gave us — login, tenant
+registration, and the licensing demo that "What was removed" below takes out — is drawn as
+sequence diagrams in [QUICKSTART-FLOWS.md](QUICKSTART-FLOWS.md).
 
 [cn-quickstart]: https://github.com/digital-asset/cn-quickstart
 
@@ -24,6 +27,40 @@ stays a merge instead of a reconciliation.
 | `quickstart/backend/.../service/UserApiImpl.java` | Reports the caller's `leasingRole`, if the registry knows one |
 | `quickstart/backend/.../security/` | Both filter chains permit the registry paths |
 | `quickstart/frontend/src/` | `views/PartiesView.tsx`, `stores/partyStore.tsx`, `roles.ts`, plus the route in `App.tsx` and the nav link in `Header.tsx` |
+| `quickstart/daml/leasing/`, `leasing-tests/` | The Daml package the leasing contracts go in, and its test package. Both empty so far |
+
+## What was removed
+
+Upstream's licensing demo API is gone: the `/app-install-requests`, `/app-installs`,
+`/licenses` and `/license-renewal-requests` paths, their four `*ApiImpl` classes, and the
+views, stores and modals that drove them (`AppInstallsView`, `LicensesView`,
+`appInstallStore`, `licenseStore`, the three `License*Modal`s, `types.ts`), plus
+`workflow.spec.ts` and its page objects. What remains of the HTTP API is the leasing
+registry and the infrastructure around it — `/feature-flags`, `/login-links`, `/user` and
+`/admin/tenant-registrations`, which is how an App User's party and OAuth2 client get into
+the app in the first place.
+
+The Daml model went too. `quickstart/daml/licensing/` and its tests are replaced by
+`quickstart/daml/leasing/`, a package with no templates in it yet, and the
+`make create-app-install-request` helper that seeded the demo is gone with them.
+
+**The plumbing stays**, and that is the whole point of the split: `LedgerApi` (submit and
+exercise), `Pqs` (read), `TokenStandardProxy`, `ChoiceContextUtils`, and `DamlRepository`
+— which keeps its wiring and its row-extraction helpers, but no longer has a single query,
+because there is nothing yet to query. So the path from an HTTP call to a ledger
+transaction is intact end to end; only the contracts travelling down it are missing.
+
+Two consequences worth knowing. Upstream's `README.md` still documents the licensing
+endpoints, since editing 28 KB of upstream prose would cost more at merge time than it
+saves. And `Modal.tsx` and `DurationInput.tsx` are kept as domain-neutral components with
+no current caller — a lease has a term, and confirmations need a modal.
+
+One build detail that will look odd. `daml/build.gradle.kts` feeds the four splice
+token-standard DARs to the codegen task on top of our own DAR. A DAR only carries the
+dependencies its own code uses, and an empty `Leasing.Lease` uses none — so without those
+lines the generated `AnyValue` and `RelTime` that `ChoiceContextUtils` and `Utils` import
+would not exist and the backend would not compile. The lines become redundant as soon as
+the leasing templates use the token standard.
 
 Everything else the earlier TypeScript version of this app had was dropped, because the
 quickstart already answers it: its own config for `config.ts`, real OAuth2 and
@@ -80,8 +117,10 @@ through the optional `party` field on a registration:
 The order that keeps everything type-checked, since the spec is the source of truth for
 both sides:
 
-1. Model the contracts in Daml. `quickstart/daml/licensing/` is the worked example, and
-   `DamlRepository`/`LedgerApi` show how the backend reads and exercises them.
+1. Model the contracts in Daml, in `quickstart/daml/leasing/daml/Leasing/Lease.daml` —
+   empty, waiting for them. There is no worked example left in the tree, so the reference
+   is upstream's licensing model at the commit before it was removed, or the quickstart
+   repo itself. Tests go in `quickstart/daml/leasing-tests/`, run by `make test-daml`.
 2. Add the paths and schemas to `quickstart/common/openapi.yaml` — a collection path per
    aggregate plus `{id}:<verb>` for each state transition, which is the convention the
    licensing paths already follow.

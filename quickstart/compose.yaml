@@ -6,7 +6,7 @@ services:
     image: "eclipse-temurin:${JAVA_VERSION}"
     container_name: backend-service
     labels:
-      - "description=Backend service supporting the Quickstart Licensing workflow.
+      - "description=Backend service supporting the Vehicle Leasing workflow.
        Note: The APP_PROVIDER_PARTY environment variable is dynamically resolved at runtime before the main process is initiated."
     working_dir: /app
     env_file:
@@ -58,6 +58,6 @@ services:
       - ./docker/backend-service/onboarding/env/${AUTH_MODE}.env
     volumes:
       - ./docker/backend-service/onboarding/onboarding.sh:/app/scripts/on/backend-service.sh
-      - ./daml/licensing/.daml/dist/quickstart-licensing-0.0.1.dar:/canton/dars/quickstart-licensing-0.0.1.dar
+      - ./daml/leasing/.daml/dist/quickstart-leasing-0.0.1.dar:/canton/dars/quickstart-leasing-0.0.1.dar
       - ./integration-test/env-init.sh:/app/scripts/on/integration-tests-environment-init.sh
       - ./integration-test:/integration-test

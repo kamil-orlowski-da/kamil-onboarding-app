@@ -190,7 +190,7 @@ services:
       - ./onboarding/utils.sh:/app/utils.sh
       - ./onboarding/app-provider.sh:/app/app-provider-auth.sh
       - ./onboarding/backend-onboarding.sh:/app/scripts/on/backend-service.sh
-      - ../../../daml/licensing/.daml/dist/quickstart-licensing-0.0.1.dar:/canton/dars/quickstart-licensing-0.0.1.dar
+      - ../../../daml/leasing/.daml/dist/quickstart-leasing-0.0.1.dar:/canton/dars/quickstart-leasing-0.0.1.dar
       - onboarding:/onboarding
     # Connect to both networks: default for keycloak, splice-validator for ledger access
     networks:

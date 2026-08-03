@@ -10,7 +10,6 @@ type Fixtures = {
   appUserSetup: AppUserSetup;
   provider: QS;
   user: QS;
-  requestTag: string;
 };
 
 export * from '@playwright/test';
@@ -33,14 +32,6 @@ export const test = base.extend<Fixtures>({
       return await AppUserSetup.create(request, keycloak, tagProvider);
     });
     await use(appUser);
-  },
-  requestTag: async ({tagProvider, appUserSetup}, use) => {
-    const tag = tagProvider.next();
-    await base.step('Run create-app-install-request script', async () => {
-      appUserSetup.createAppInstallRequest(tag);
-    });
-
-    await use(tag);
   },
   provider: async ({browser}, use) => {
     const context = await browser.newContext({storageState: PROVIDER_STORAGE});

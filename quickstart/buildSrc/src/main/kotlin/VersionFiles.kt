@@ -20,7 +20,7 @@ object VersionFiles {
     val damlYamlSdk: String
         get() {
             val rootProjectDir = File(System.getProperty("gradle.root.dir"))
-            val damlYamlFile = File(rootProjectDir, "daml/licensing/daml.yaml")
+            val damlYamlFile = File(rootProjectDir, "daml/leasing/daml.yaml")
 
             if (!damlYamlFile.exists()) {
                 throw IllegalStateException("daml.yaml file not found in daml directory" +

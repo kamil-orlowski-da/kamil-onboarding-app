@@ -53,11 +53,6 @@ export default defineConfig({
     },
 
     {
-      name: 'workflow',
-      testMatch: '**/workflow.spec.ts',
-      dependencies: ['login'],
-    },
-    {
       name: 'tenant-registrations',
       testMatch: '**/tenant-registration.spec.ts',
       dependencies: ['login'],
