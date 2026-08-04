@@ -16,16 +16,16 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @ConfigurationPropertiesScan("com.digitalasset.demo")
 public class App {
-    private static Logger logger = LoggerFactory.getLogger(App.class);
+  private static Logger logger = LoggerFactory.getLogger(App.class);
 
-    public static void main(String[] args) {
-        logger.info("Starting application with args: {}", String.join(",", args));
-        try {
-            SpringApplication.run(App.class, args);
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("Failed to start application" + e.getMessage(), e);
-            System.exit(2);
-        }
+  public static void main(String[] args) {
+    logger.info("Starting application with args: {}", String.join(",", args));
+    try {
+      SpringApplication.run(App.class, args);
+    } catch (Exception e) {
+      e.printStackTrace();
+      logger.error("Failed to start application" + e.getMessage(), e);
+      System.exit(2);
     }
+  }
 }

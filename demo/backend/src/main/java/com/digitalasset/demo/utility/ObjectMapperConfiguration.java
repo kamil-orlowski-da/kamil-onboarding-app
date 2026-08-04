@@ -11,11 +11,11 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class ObjectMapperConfiguration {
-    @Autowired
-    void configureObjectMapper(final ObjectMapper mapper) {
-        // enable JsonNullable serialization
-        mapper.registerModule(new JsonNullableModule());
-        // do not exclude fields with null values from serialization
-        mapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
-    }
+  @Autowired
+  void configureObjectMapper(final ObjectMapper mapper) {
+    // enable JsonNullable serialization
+    mapper.registerModule(new JsonNullableModule());
+    // do not exclude fields with null values from serialization
+    mapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
+  }
 }

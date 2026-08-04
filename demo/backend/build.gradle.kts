@@ -9,6 +9,20 @@ plugins {
     id("org.openapi.generator") version "7.7.0"
     id("org.springframework.boot") version "3.4.2"
     id("com.google.protobuf") version "0.9.4"
+    id("com.diffplug.spotless") version "6.25.0"
+}
+
+// Formatting only, and deliberately scoped to hand-written sources: the OpenAPI, protobuf and
+// Daml binding generators all emit into build/, and reformatting their output would be undone
+// on the next codegen run. Runs without compiling, so it does not need the Daml SDK.
+spotless {
+    java {
+        target("src/**/*.java")
+        googleJavaFormat("1.22.0")
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
 
 dependencies {

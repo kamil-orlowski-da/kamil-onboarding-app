@@ -1,8 +1,13 @@
 package com.digitalasset.demo.service;
 
+import static com.digitalasset.demo.service.ServiceUtils.traceServiceCallAsync;
+import static com.digitalasset.demo.utility.TracingUtils.tracingCtx;
+
 import com.digitalasset.demo.api.ActorsApi;
 import com.digitalasset.demo.registry.PartyRegistry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.openapitools.model.Actor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,12 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-import static com.digitalasset.demo.service.ServiceUtils.traceServiceCallAsync;
-import static com.digitalasset.demo.utility.TracingUtils.tracingCtx;
 
 /**
  * The one registry read: everybody, whatever their role.
@@ -27,19 +26,19 @@ import static com.digitalasset.demo.utility.TracingUtils.tracingCtx;
 @Controller
 @RequestMapping("${openapi.asset.base-path:}")
 public class ActorsApiImpl implements ActorsApi {
-    private static final Logger logger = LoggerFactory.getLogger(ActorsApiImpl.class);
-    private final PartyRegistry registry;
+  private static final Logger logger = LoggerFactory.getLogger(ActorsApiImpl.class);
+  private final PartyRegistry registry;
 
-    @Autowired
-    public ActorsApiImpl(PartyRegistry registry) {
-        this.registry = registry;
-    }
+  @Autowired
+  public ActorsApiImpl(PartyRegistry registry) {
+    this.registry = registry;
+  }
 
-    @Override
-    @WithSpan
-    public CompletableFuture<ResponseEntity<List<Actor>>> listActors() {
-        var ctx = tracingCtx(logger, "listActors");
-        return traceServiceCallAsync(ctx, () ->
-                CompletableFuture.supplyAsync(() -> ResponseEntity.ok(registry.listActors())));
-    }
+  @Override
+  @WithSpan
+  public CompletableFuture<ResponseEntity<List<Actor>>> listActors() {
+    var ctx = tracingCtx(logger, "listActors");
+    return traceServiceCallAsync(
+        ctx, () -> CompletableFuture.supplyAsync(() -> ResponseEntity.ok(registry.listActors())));
+  }
 }

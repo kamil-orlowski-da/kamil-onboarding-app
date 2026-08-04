@@ -10,40 +10,40 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "ledger")
 public class LedgerConfig {
 
-    private String host = "localhost";
-    private int port = 6865;
-    private String applicationId;
-    private String registryBaseUri;
+  private String host = "localhost";
+  private int port = 6865;
+  private String applicationId;
+  private String registryBaseUri;
 
-    public String getHost() {
-        return host;
-    }
+  public String getHost() {
+    return host;
+  }
 
-    public void setHost(String host) {
-        this.host = host;
-    }
+  public void setHost(String host) {
+    this.host = host;
+  }
 
-    public int getPort() {
-        return port;
-    }
+  public int getPort() {
+    return port;
+  }
 
-    public void setPort(int port) {
-        this.port = port;
-    }
+  public void setPort(int port) {
+    this.port = port;
+  }
 
-    public String getApplicationId() {
-        return applicationId;
-    }
+  public String getApplicationId() {
+    return applicationId;
+  }
 
-    public void setApplicationId(String applicationId) {
-        this.applicationId = applicationId;
-    }
+  public void setApplicationId(String applicationId) {
+    this.applicationId = applicationId;
+  }
 
-    public String getRegistryBaseUri() {
-        return registryBaseUri;
-    }
+  public String getRegistryBaseUri() {
+    return registryBaseUri;
+  }
 
-    public void setRegistryBaseUri(String registryBaseUri) {
-        this.registryBaseUri = registryBaseUri;
-    }
+  public void setRegistryBaseUri(String registryBaseUri) {
+    this.registryBaseUri = registryBaseUri;
+  }
 }
