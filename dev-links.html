@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+  SPDX-License-Identifier: 0BSD
+
+  Local development landing page. Open it straight off disk:
+
+      open dev-links.html
+
+  Every URL here comes from the LocalNet stack that ./dev.sh starts. Nothing is
+  fetched from the network, so the page works offline and does not need a server.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vehicle Leasing &mdash; local dev</title>
+<style>
+  :root {
+    --bg: #fbfbfa; --card: #fff; --fg: #1a1a1a; --muted: #6b6b6b;
+    --line: #e2e2df; --accent: #1f6feb; --up: #1a7f37; --down: #b35900;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c; --card: #1d2026; --fg: #e6e6e6; --muted: #9aa0a6;
+      --line: #2c3038; --accent: #6ea8ff; --up: #4ac26b; --down: #d29922;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2.5rem 1.5rem 4rem; background: var(--bg); color: var(--fg);
+    font: 15px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 1.55rem; margin: 0 0 .3rem; letter-spacing: -.01em; }
+  h2 {
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--muted); margin: 2.4rem 0 .8rem; font-weight: 600;
+  }
+  .sub { color: var(--muted); margin: 0 0 .4rem; }
+  .legend { color: var(--muted); font-size: .86rem; margin: 0 0 1.2rem; }
+  .legend code { color: var(--fg); }
+
+  .grid { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); }
+  a.card {
+    display: block; padding: .8rem .95rem; background: var(--card); color: inherit;
+    border: 1px solid var(--line); border-radius: 9px; text-decoration: none;
+    transition: border-color .12s, transform .12s;
+  }
+  a.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .name { font-weight: 600; display: flex; align-items: center; gap: .45rem; }
+  .url { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; margin-top: .2rem; word-break: break-all; }
+  .desc { color: var(--muted); font-size: .84rem; margin-top: .35rem; }
+
+  /* Filled once the connectivity probe below resolves. */
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex: none; }
+  [data-state="up"]   .dot { background: var(--up); }
+  [data-state="down"] .dot { background: var(--down); }
+  [data-state="down"] { opacity: .62; }
+
+  .tag {
+    font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 600;
+    color: var(--muted); border: 1px solid var(--line); border-radius: 4px;
+    padding: .05rem .3rem; margin-left: auto;
+  }
+
+  footer { margin-top: 3rem; border-top: 1px solid var(--line); padding-top: 1.2rem; color: var(--muted); font-size: .87rem; }
+  footer table { border-collapse: collapse; margin: .5rem 0 1rem; }
+  footer td { padding: .18rem 1.4rem .18rem 0; vertical-align: top; }
+  footer code, .legend code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .84em; }
+  button {
+    font: inherit; font-size: .85rem; padding: .3rem .7rem; cursor: pointer;
+    background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px;
+  }
+  button:hover { border-color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Vehicle Leasing &mdash; local dev</h1>
+  <p class="sub">LocalNet UIs exposed by <code>./dev.sh</code>.</p>
+  <p class="legend">
+    Ports encode the party: <code>2xxx</code> App User &middot; <code>3xxx</code> App Provider (that's us)
+    &middot; <code>4xxx</code> Super Validator. All <code>*.localhost</code> names resolve to 127.0.0.1.
+  </p>
+
+  <h2>The application</h2>
+  <div class="grid">
+    <a class="card" href="http://app-provider.localhost:3000">
+      <div class="name"><span class="dot"></span>App UI</div>
+      <div class="url">app-provider.localhost:3000</div>
+      <div class="desc">The React frontend, served by nginx from <code>frontend/dist</code>. Rebuilt by <code>./dev.sh</code>.</div>
+    </a>
+    <a class="card" href="http://app-provider.localhost:5173">
+      <div class="name"><span class="dot"></span>Vite dev server<span class="tag">./dev.sh --vite</span></div>
+      <div class="url">app-provider.localhost:5173</div>
+      <div class="desc">Same app with hot reload, proxying <code>/api</code> to the backend. Only up while Vite runs.</div>
+    </a>
+    <a class="card" href="http://localhost:3975/v2/version">
+      <div class="name"><span class="dot"></span>Ledger JSON API<span class="tag">3xxx</span></div>
+      <div class="url">localhost:3975</div>
+      <div class="desc">Canton HTTP Ledger API for our own participant &mdash; query contracts and submit commands without gRPC.</div>
+    </a>
+  </div>
+
+  <h2>App Provider &mdash; 3xxx</h2>
+  <div class="grid">
+    <a class="card" href="http://wallet.localhost:3000">
+      <div class="name"><span class="dot"></span>Wallet</div>
+      <div class="url">wallet.localhost:3000</div>
+      <div class="desc">Canton Coin balance and transfers for the app-provider party.</div>
+    </a>
+    <a class="card" href="http://ans.localhost:3000">
+      <div class="name"><span class="dot"></span>Name service</div>
+      <div class="url">ans.localhost:3000</div>
+      <div class="desc">Register a human-readable name for the app-provider party.</div>
+    </a>
+  </div>
+
+  <h2>App User &mdash; 2xxx</h2>
+  <div class="grid">
+    <a class="card" href="http://wallet.localhost:2000">
+      <div class="name"><span class="dot"></span>Wallet</div>
+      <div class="url">wallet.localhost:2000</div>
+      <div class="desc">The counterparty's wallet &mdash; the lessee side of a leasing flow.</div>
+    </a>
+    <a class="card" href="http://ans.localhost:2000">
+      <div class="name"><span class="dot"></span>Name service</div>
+      <div class="url">ans.localhost:2000</div>
+      <div class="desc">Register a human-readable name for the app-user party.</div>
+    </a>
+  </div>
+
+  <h2>Super Validator &mdash; 4xxx</h2>
+  <div class="grid">
+    <a class="card" href="http://sv.localhost:4000">
+      <div class="name"><span class="dot"></span>SV interface</div>
+      <div class="url">sv.localhost:4000</div>
+      <div class="desc">Operations UI for the simulated Super Validator running the global synchronizer.</div>
+    </a>
+    <a class="card" href="http://scan.localhost:4000">
+      <div class="name"><span class="dot"></span>Scan</div>
+      <div class="url">scan.localhost:4000</div>
+      <div class="desc">Network-wide ledger and Canton Coin data. Rounds can take ~1h to appear on LocalNet.</div>
+    </a>
+    <a class="card" href="http://wallet.localhost:4000">
+      <div class="name"><span class="dot"></span>SV wallet</div>
+      <div class="url">wallet.localhost:4000</div>
+      <div class="desc">The Super Validator's own wallet. Source of coin when you need to fund a party.</div>
+    </a>
+  </div>
+
+  <h2>Tooling</h2>
+  <div class="grid">
+    <a class="card" href="http://localhost:9090">
+      <div class="name"><span class="dot"></span>Swagger UI</div>
+      <div class="url">localhost:9090</div>
+      <div class="desc">Browsable Ledger API specs for all three participants &mdash; pick app-provider, app-user or sv from the dropdown.</div>
+    </a>
+    <a class="card" href="http://localhost:3030">
+      <div class="name"><span class="dot"></span>Grafana<span class="tag">observability</span></div>
+      <div class="url">localhost:3030</div>
+      <div class="desc">Metrics, logs and traces. Only started with <code>OBSERVABILITY_ENABLED=true</code> in <code>demo/.env.local</code>.</div>
+    </a>
+    <a class="card" href="http://keycloak.localhost:8082/admin/master/console/">
+      <div class="name"><span class="dot"></span>Keycloak<span class="tag">oauth2</span></div>
+      <div class="url">keycloak.localhost:8082</div>
+      <div class="desc">Identity provider admin console. Only started with <code>AUTH_MODE=oauth2</code>.</div>
+    </a>
+  </div>
+
+  <footer>
+    <table>
+      <tr><td><code>./dev.sh</code></td><td>tear down whatever is running, rebuild, start fresh</td></tr>
+      <tr><td><code>./dev.sh --vite</code></td><td>same, then run the Vite dev server in the foreground</td></tr>
+      <tr><td><code>./dev.sh --stop</code></td><td>tear the stack down</td></tr>
+      <tr><td><code>./check.sh</code></td><td>lint and fix both tiers, then run the tests</td></tr>
+      <tr><td><code>cd demo &amp;&amp; make tail</code></td><td>follow container logs</td></tr>
+    </table>
+    <p>
+      <button id="recheck">Re-check</button>
+      <span id="probe-note"></span>
+    </p>
+    <p>
+      Dots are a no-cors connectivity probe, so they only say whether something is listening &mdash;
+      a service answering 401 still counts as up. Some browsers block requests from
+      <code>file://</code> pages to localhost; if everything shows amber while the stack is clearly
+      running, that is why, and the links themselves still work.
+    </p>
+  </footer>
+
+</main>
+
+<script>
+  // Reachability only. A no-cors fetch resolves opaquely for any HTTP response and
+  // rejects when the connection itself fails, which is the distinction we want: several
+  // of these answer 401 or 302 when healthy.
+  async function probe(card) {
+    card.removeAttribute('data-state');
+    try {
+      await fetch(card.href, { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(4000) });
+      card.dataset.state = 'up';
+    } catch {
+      card.dataset.state = 'down';
+    }
+  }
+
+  async function probeAll() {
+    const cards = [...document.querySelectorAll('a.card')];
+    const note = document.getElementById('probe-note');
+    note.textContent = ' checking…';
+    await Promise.all(cards.map(probe));
+    const up = cards.filter(c => c.dataset.state === 'up').length;
+    note.textContent = ` ${up}/${cards.length} reachable`;
+  }
+
+  document.getElementById('recheck').addEventListener('click', probeAll);
+  probeAll();
+</script>
+</body>
+</html>
