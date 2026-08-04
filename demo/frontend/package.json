@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "npm run gen:openapi && tsc -b --noEmit && vite build",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "preview": "vite preview"
   },
   "dependencies": {
