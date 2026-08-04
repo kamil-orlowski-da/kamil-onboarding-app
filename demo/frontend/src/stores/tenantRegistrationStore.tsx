@@ -9,7 +9,7 @@ import type {
     TenantRegistration,
     TenantRegistrationRequest
 } from '../openapi.d.ts';
-import { withErrorHandling } from "../utils/error";
+import { useErrorHandling } from "../utils/error";
 
 
 interface TenantRegistrationState {
@@ -38,7 +38,7 @@ export const TenantRegistrationProvider = ({
     const toast = useToast()
 
     const fetchTenantRegistrations = useCallback(
-        withErrorHandling(`Fetching Tenant Registrations`)(async () => {
+        useErrorHandling(`Fetching Tenant Registrations`)(async () => {
             const client: Client = await api.getClient();
             const response = await client.listTenantRegistrations();
             setRegistrations(response.data);
@@ -47,11 +47,11 @@ export const TenantRegistrationProvider = ({
     );
 
     const createTenantRegistration = useCallback(
-        withErrorHandling(`Creating Tenant Registration`)(async (request: TenantRegistrationRequest) => {
+        useErrorHandling(`Creating Tenant Registration`)(async (request: TenantRegistrationRequest) => {
             const client: Client = await api.getClient()
             // New name: createTenantRegistration
             const response = await client.createTenantRegistration({}, request)
-            const created = (response as any)?.data as TenantRegistration | undefined;
+            const created = response?.data as TenantRegistration | undefined;
             if (created?.tenantId) {
                 setRegistrations(prev => {
                     if (prev.some(reg =>
@@ -66,11 +66,11 @@ export const TenantRegistrationProvider = ({
             }
             toast.displaySuccess('Tenant registration created')
         }),
-        [withErrorHandling, setRegistrations, toast]
+        [setRegistrations, toast]
     )
 
     const deleteTenantRegistration = useCallback(
-        withErrorHandling(`Deleting Tenant Registration`)(async (tenantId: string) => {
+        useErrorHandling(`Deleting Tenant Registration`)(async (tenantId: string) => {
             const client: Client = await api.getClient()
             await client.deleteTenantRegistration({ tenantId: tenantId })
             setRegistrations((prev) => prev.filter((reg) => reg.tenantId !== tenantId))

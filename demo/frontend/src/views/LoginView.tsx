@@ -17,7 +17,7 @@ const LoginView: React.FC = () => {
                 const client: Client = await api.getClient();
                 const response = await client.listLinks();
                 setLoginLinks(response.data);
-            } catch (error) {
+            } catch {
                 toast.displayError('Error fetching login links');
             }
         };
@@ -29,7 +29,7 @@ const LoginView: React.FC = () => {
                 if (response.data.authMode === 'oauth2') {
                     await fetchLoginLinks();
                 }
-            } catch (error) {
+            } catch {
                 toast.displayError('Error fetching feature flags');
             }
         };

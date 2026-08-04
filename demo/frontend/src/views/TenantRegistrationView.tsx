@@ -28,23 +28,25 @@ const TenantRegistrationView: React.FC = () => {
         users: []
     })
 
-    const toast = useToast();
+    // Destructured rather than held as `toast`: the provider hands back a fresh object every
+    // render, but `displayError` is memoized, so it can be an effect dependency without
+    // re-triggering the fetch every time a toast shows or hides.
+    const { displayError } = useToast();
     const [featureFlags, setFeatureFlags] = useState<FeatureFlags | null>(null);
 
-    const fetchFeatureFlags = async () => {
-        try {
-            const client: Client = await api.getClient();
-            const response = await client.getFeatureFlags();
-            setFeatureFlags(response.data);
-        } catch (error) {
-            toast.displayError('Error fetching feature flags');
-        }
-    };
-
     useEffect(() => {
+        const fetchFeatureFlags = async () => {
+            try {
+                const client: Client = await api.getClient();
+                const response = await client.getFeatureFlags();
+                setFeatureFlags(response.data);
+            } catch {
+                displayError('Error fetching feature flags');
+            }
+        };
         fetchFeatureFlags();
         fetchTenantRegistrations()
-    }, [fetchTenantRegistrations])
+    }, [fetchTenantRegistrations, displayError])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -78,7 +80,7 @@ const TenantRegistrationView: React.FC = () => {
         e.preventDefault()
         const error = validate()
         if (error) {
-            toast.displayError(error)
+            displayError(error)
             return
         }
         await createTenantRegistration(formData)

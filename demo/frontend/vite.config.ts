@@ -1,4 +1,4 @@
-import {ConfigEnv, defineConfig, Plugin, loadEnv} from 'vite'
+import {ConfigEnv, defineConfig, Plugin, ProxyOptions, loadEnv} from 'vite'
 import react from '@vitejs/plugin-react'
 import ViteYaml from '@modyfi/vite-plugin-yaml'
 
@@ -11,7 +11,7 @@ function printWelcomeMessage(): Plugin {
         `  \x1b[97mVisit \x1b[96mhttp://app-provider.localhost\x1b[1;96m:${server.config.server.port}\x1b[0m\x1b[97m to start\x1b[0m`
       );
       const http = server.httpServer;
-      if (http && (http.listening || (http as any)._handle)) {
+      if (http && (http.listening || (http as { _handle?: unknown })._handle)) {
         print();
       } else if (http) {
         http.once('listening', print);
@@ -23,8 +23,8 @@ function printWelcomeMessage(): Plugin {
   };
 }
 
-function setProxyCustomHeaders(proxy: any) {
-    proxy.on('proxyReq', (proxyReq: any, req: any) => {
+const setProxyCustomHeaders: NonNullable<ProxyOptions['configure']> = (proxy) => {
+    proxy.on('proxyReq', (proxyReq, req) => {
         // Set custom headers similar to nginx's proxy_set_header
         proxyReq.setHeader('Content-Type', req.headers['content-type'] || '')
         proxyReq.setHeader('X-Real-IP', req.socket.remoteAddress || '')

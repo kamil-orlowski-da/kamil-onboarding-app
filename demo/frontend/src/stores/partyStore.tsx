@@ -19,7 +19,7 @@ import type {
     CreateCustomerRequest,
     CreateLeasingCompanyRequest,
 } from '../openapi.d.ts'
-import { withErrorHandling } from '../utils/error'
+import { useErrorHandling } from '../utils/error'
 
 interface PartyState {
     actors: Actor[]
@@ -43,7 +43,7 @@ export const PartyProvider = ({ children }: PartyProviderProps) => {
     const toast = useToast()
 
     const fetchActors = useCallback(
-        withErrorHandling(`Fetching Parties`)(async () => {
+        useErrorHandling(`Fetching Parties`)(async () => {
             const client: Client = await api.getClient()
             const response = await client.listActors()
             setActors(response.data)
@@ -52,7 +52,7 @@ export const PartyProvider = ({ children }: PartyProviderProps) => {
     )
 
     // The three registrations differ only in which client method they call, so they share
-    // this. `withErrorHandling` swallows the rejection and toasts it, which is why the
+    // this. `useErrorHandling` swallows the rejection and toasts it, which is why the
     // caller cannot tell success from failure by "it returned" — hence the re-read.
     const register = useCallback(
         async (name: string, call: (client: Client) => Promise<unknown>) => {
@@ -64,21 +64,21 @@ export const PartyProvider = ({ children }: PartyProviderProps) => {
     )
 
     const createCarDealer = useCallback(
-        withErrorHandling(`Registering Car Dealer`)((request: CreateCarDealerRequest) =>
+        useErrorHandling(`Registering Car Dealer`)((request: CreateCarDealerRequest) =>
             register(request.name, (client) => client.createCarDealer(null, request))
         ),
         [register]
     )
 
     const createLeasingCompany = useCallback(
-        withErrorHandling(`Registering Leasing Company`)((request: CreateLeasingCompanyRequest) =>
+        useErrorHandling(`Registering Leasing Company`)((request: CreateLeasingCompanyRequest) =>
             register(request.name, (client) => client.createLeasingCompany(null, request))
         ),
         [register]
     )
 
     const createCustomer = useCallback(
-        withErrorHandling(`Registering Customer`)((request: CreateCustomerRequest) =>
+        useErrorHandling(`Registering Customer`)((request: CreateCustomerRequest) =>
             register(request.name, (client) => client.createCustomer(null, request))
         ),
         [register]

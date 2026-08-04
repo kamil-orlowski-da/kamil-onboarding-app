@@ -38,7 +38,7 @@ const RegisterForm: React.FC<{
         setSubmitting(true)
         try {
             await onSubmit(name, useOwnParty ? ownParty : undefined)
-            // Cleared unconditionally: `withErrorHandling` in the store swallows the
+            // Cleared unconditionally: `useErrorHandling` in the store swallows the
             // rejection to toast it, so there is nothing here to tell success from a
             // duplicate name. The table below is the source of truth either way.
             setName('')

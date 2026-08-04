@@ -46,7 +46,7 @@ To start the application:
 ```bash
 # In the local repository directory
 $ direnv allow
-$ cd quickstart
+$ cd demo
 
 # Setup your quickstart environment
 $ make setup
@@ -75,7 +75,7 @@ If a container fails to start, there are a few things to try:
 - Ensure Docker Compose is configured to allocate enough memory. The recommended minimum total memory is 8 GB.
 - Start fresh with `make clean-all` and then manually delete all Docker images and volumes.
 
-**Note**: The CN Quickstart uses Java SDK version `Eclipse Temurin JDK version 21` which runs within the Docker container.  This information is specified in `quickstart/compose.yaml` and `.env`.
+**Note**: The CN Quickstart uses Java SDK version `Eclipse Temurin JDK version 21` which runs within the Docker container.  This information is specified in `demo/compose.yaml` and `.env`.
 
 If you need assistance, please follow these directions to gather the log information needed for debugging:
 1. `make setup`             # optional
@@ -478,7 +478,7 @@ Open the app at: http://app-provider.localhost:5173
 Note: Use the same host/port so OAuth redirects (Keycloak) continue to work.
 
 #### Debugging in VS Code
-Create or update quickstart/frontend/.vscode/launch.json with:
+Create or update demo/frontend/.vscode/launch.json with:
 
 ```json
 {
@@ -489,7 +489,7 @@ Create or update quickstart/frontend/.vscode/launch.json with:
       "type": "chrome",
       "request": "launch",
       "url": "http://app-provider.localhost:5173",
-      "webRoot": "${workspaceFolder}/quickstart/frontend/src"
+      "webRoot": "${workspaceFolder}/demo/frontend/src"
     }
   ]
 }

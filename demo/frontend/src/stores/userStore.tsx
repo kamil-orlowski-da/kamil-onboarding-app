@@ -30,7 +30,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             const response = await client.getAuthenticatedUser();
             setUser(response.data);
         } catch (error) {
-            if ((error as any)?.response?.status === 401) {
+            if ((error as { response?: { status?: number } })?.response?.status === 401) {
                 setUser(null);
             } else {
                 toast.displayError('Error fetching user');
@@ -64,7 +64,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             } else {
                 toast.displayError('Error logging out');
             }
-        } catch (error) {
+        } catch {
             toast.displayError('Error logging out');
         }
     }, [clearUser, toast, navigate, getCsrfToken]);

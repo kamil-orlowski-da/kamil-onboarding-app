@@ -9,7 +9,7 @@ import { useToast } from '../stores/toastStore';
 function isAxiosErrorWithErrorResponse(
     err: unknown
 ): err is AxiosError<ErrorResponse> {
-    return typeof (err as any)?.isAxiosError === 'boolean';
+    return typeof (err as Partial<AxiosError>)?.isAxiosError === 'boolean';
 }
 
 function extractError(err: unknown): { status?: number; message?: string } {
@@ -22,23 +22,27 @@ function extractError(err: unknown): { status?: number; message?: string } {
         };
     }
     // fallback
-    const anyErr = err as any;
+    const anyErr = err as { status?: number; message?: string };
     return {
         status: anyErr?.status,
         message: anyErr?.message ?? 'Unexpected error',
     };
 }
 
-export function withErrorHandling(action: string) {
+// Named as a hook because it calls one: `useToast`. Call it from a component or another
+// hook, at render time, not from inside a callback.
+export function useErrorHandling(action: string) {
     const toast = useToast();
 
-    function wrap<T extends (...args: any[]) => Promise<any>>(
+    function wrap<T extends (...args: never[]) => Promise<unknown>>(
         fn: T,
         onSuccess?: (result: Awaited<ReturnType<T>>) => void,
     ): (...args: Parameters<T>) => Promise<Awaited<ReturnType<T>> | void> {
         return async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>> | void> => {
             try {
-                const result = await fn(...args);
+                // The `never[]` constraint makes TS widen the call's return to `unknown`;
+                // `ReturnType<T>` is the type the caller actually gets back.
+                const result = await fn(...args) as Awaited<ReturnType<T>>;
                 onSuccess?.(result);
                 return result;
             } catch (err) {
